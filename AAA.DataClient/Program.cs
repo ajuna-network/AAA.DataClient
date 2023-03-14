@@ -38,6 +38,11 @@ namespace Ajuna.TheOracle.DataClient
             var blockHash = await GetBlockHashAsync(url, token);
             AvatarGame avatarGame = await DataTasks.PollGameDataAsync(url, blockHash.Bytes, token);
 
+            File.WriteAllText("avatar_game.json", JsonSerializer.Serialize(avatarGame, new JsonSerializerOptions()
+            {
+                WriteIndented = true,
+            }));
+
             var avatarInfoList = new List<AvatarInfo>();
             foreach (var avatarInfos in avatarGame.Players.Values.Where(p => p.AvatarInfos != null))
             {
