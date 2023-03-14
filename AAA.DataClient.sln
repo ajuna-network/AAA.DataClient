@@ -1,0 +1,25 @@
+﻿
+Microsoft Visual Studio Solution File, Format Version 12.00
+# Visual Studio Version 17
+VisualStudioVersion = 17.5.33414.496
+MinimumVisualStudioVersion = 10.0.40219.1
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "AAA.DataClient", "AAA.DataClient\AAA.DataClient.csproj", "{7ADB431E-8041-41E0-8765-05F34CCDEEF7}"
+EndProject
+Global
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|Any CPU = Debug|Any CPU
+		Release|Any CPU = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{7ADB431E-8041-41E0-8765-05F34CCDEEF7}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{7ADB431E-8041-41E0-8765-05F34CCDEEF7}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{7ADB431E-8041-41E0-8765-05F34CCDEEF7}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{7ADB431E-8041-41E0-8765-05F34CCDEEF7}.Release|Any CPU.Build.0 = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(SolutionProperties) = preSolution
+		HideSolutionNode = FALSE
+	EndGlobalSection
+	GlobalSection(ExtensibilityGlobals) = postSolution
+		SolutionGuid = {717196C3-BD4F-4438-8703-6E0109F910D3}
+	EndGlobalSection
+EndGlobal
