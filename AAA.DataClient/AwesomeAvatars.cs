@@ -4,21 +4,21 @@ using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
 using Ajuna.Integration.Helper;
-using Ajuna.NetApi;
-using Ajuna.NetApi.Model.Types;
-using Ajuna.NetApi.Model.Types.Base;
-using Ajuna.NetApi.Model.Types.Primitive;
-using Bajun.Network.NET.NetApiExt.Generated.Model.bajun_runtime;
-using Bajun.Network.NET.NetApiExt.Generated.Model.pallet_ajuna_awesome_avatars.types.account;
-using Bajun.Network.NET.NetApiExt.Generated.Model.pallet_ajuna_awesome_avatars.types.avatar;
-using Bajun.Network.NET.NetApiExt.Generated.Model.pallet_ajuna_awesome_avatars.types.config;
-using Bajun.Network.NET.NetApiExt.Generated.Model.pallet_ajuna_awesome_avatars.types.season;
-using Bajun.Network.NET.NetApiExt.Generated.Model.primitive_types;
-using Bajun.Network.NET.NetApiExt.Generated.Model.sp_core.bounded.bounded_vec;
-using Bajun.Network.NET.NetApiExt.Generated.Model.sp_core.crypto;
-using Bajun.Network.NET.NetApiExt.Generated.Storage;
+using Substrate.NetApi.Model.Types;
+using Substrate.NetApi.Model.Types.Base;
+using Substrate.NetApi.Model.Types.Primitive;
+using Substrate.Bajun.NET.NetApiExt.Generated.Model.pallet_ajuna_awesome_avatars.types.account;
+using Substrate.Bajun.NET.NetApiExt.Generated.Model.pallet_ajuna_awesome_avatars.types.avatar;
+using Substrate.Bajun.NET.NetApiExt.Generated.Model.pallet_ajuna_awesome_avatars.types.config;
+using Substrate.Bajun.NET.NetApiExt.Generated.Model.pallet_ajuna_awesome_avatars.types.season;
+using Substrate.Bajun.NET.NetApiExt.Generated.Model.primitive_types;
+using Substrate.Bajun.NET.NetApiExt.Generated.Model.sp_core.crypto;
+using Substrate.Bajun.NET.NetApiExt.Generated.Storage;
 using Newtonsoft.Json.Linq;
 using Serilog;
+using Substrate.NetApi;
+using Substrate.Bajun.NET.NetApiExt.Generated.Model.bounded_collections.bounded_vec;
+using Substrate.Bajun.NET.NetApiExt.Generated.Model.bajun_runtime;
 
 namespace Ajuna.Integration
 {
@@ -47,7 +47,7 @@ namespace Ajuna.Integration
         /// </summary>
         /// <param name="token"></param>
         /// <returns></returns>
-        public async Task<AccountId32> GetTreasurerAsync(CancellationToken token)
+        public async Task<AccountId32> GetTreasurerAsync(U16 seasonId, CancellationToken token)
         {
             if (!IsConnected)
             {
@@ -55,23 +55,7 @@ namespace Ajuna.Integration
                 return null;
             }
 
-            return await SubstrateClient.AwesomeAvatarsStorage.Treasurer(token);
-        }
-
-        /// <summary>
-        ///
-        /// </summary>
-        /// <param name="token"></param>
-        /// <returns></returns>
-        public async Task<U16> GetCurrentSeasonIdAsync(CancellationToken token)
-        {
-            if (!IsConnected)
-            {
-                Log.Warning("Currently not connected to the network!");
-                return null;
-            }
-
-            return await SubstrateClient.AwesomeAvatarsStorage.CurrentSeasonId(token);
+            return await SubstrateClient.AwesomeAvatarsStorage.Treasurer(seasonId, token);
         }
 
         /// <summary>
@@ -164,7 +148,7 @@ namespace Ajuna.Integration
         /// <param name="key"></param>
         /// <param name="token"></param>
         /// <returns></returns>
-        public async Task<BoundedVecT28> GetOwnersAsync(AccountId32 key, CancellationToken token)
+        public async Task<BoundedVecT35> GetOwnersAsync(BaseTuple<AccountId32, U16> key, CancellationToken token)
         {
             if (!IsConnected)
             {
@@ -176,12 +160,12 @@ namespace Ajuna.Integration
         }
 
         /// <summary>
-        ///
+        /// 
         /// </summary>
-        /// <param name="ownerAccount"></param>
+        /// <param name="key"></param>
         /// <param name="token"></param>
         /// <returns></returns>
-        public async Task<AccountInfo> GetAccountsAsync(AccountId32 ownerAccount, CancellationToken token)
+        public async Task<BaseTuple> GetLockedAvatarsAsync(H256 key, CancellationToken token)
         {
             if (!IsConnected)
             {
@@ -189,7 +173,57 @@ namespace Ajuna.Integration
                 return null;
             }
 
-            return await SubstrateClient.AwesomeAvatarsStorage.Accounts(ownerAccount, token);
+            return await SubstrateClient.AwesomeAvatarsStorage.LockedAvatars(key, token);
+        }
+
+        /// <summary>
+        /// 
+        /// </summary>
+        /// <param name="token"></param>
+        /// <returns></returns>
+        public async Task<U32> GetCollectionIdAsync(CancellationToken token)
+        {
+            if (!IsConnected)
+            {
+                Log.Warning("Currently not connected to the network!");
+                return null;
+            }
+
+            return await SubstrateClient.AwesomeAvatarsStorage.CollectionId(token);
+        }
+
+        /// <summary>
+        ///
+        /// </summary>
+        /// <param name="ownerAccount"></param>
+        /// <param name="token"></param>
+        /// <returns></returns>
+        public async Task<PlayerConfig> GetPlayerConfigsAsync(AccountId32 key, CancellationToken token)
+        {
+            if (!IsConnected)
+            {
+                Log.Warning("Currently not connected to the network!");
+                return null;
+            }
+
+            return await SubstrateClient.AwesomeAvatarsStorage.PlayerConfigs(key, token);
+        }
+
+        /// <summary>
+        ///
+        /// </summary>
+        /// <param name="ownerAccount"></param>
+        /// <param name="token"></param>
+        /// <returns></returns>
+        public async Task<PlayerSeasonConfig> GetPlayerSeasonConfigsAsync(BaseTuple<AccountId32, U16> key, CancellationToken token)
+        {
+            if (!IsConnected)
+            {
+                Log.Warning("Currently not connected to the network!");
+                return null;
+            }
+
+            return await SubstrateClient.AwesomeAvatarsStorage.PlayerSeasonConfigs(key, token);
         }
 
         /// <summary>
@@ -215,7 +249,7 @@ namespace Ajuna.Integration
         /// <param name="key"></param>
         /// <param name="token"></param>
         /// <returns></returns>
-        public async Task<U128> GetTradeAsync(H256 key, CancellationToken token)
+        public async Task<U128> GetTradeAsync(BaseTuple<U16, H256> key, CancellationToken token)
         {
             if (!IsConnected)
             {
@@ -227,67 +261,36 @@ namespace Ajuna.Integration
         }
 
         /// <summary>
-        ///
-        /// </summary>
-        /// <param name="myMogwais"></param>
-        /// <param name="token"></param>
-        /// <returns></returns>
-        /// <summary>
-        ///
+        /// 
         /// </summary>
         /// <param name="token"></param>
         /// <returns></returns>
-        public async Task<List<(H256, U128)>> GetTradesAsync(CancellationToken token)
-        {
-            return await GetTradesAsync(null, 100, token);
-        }
-
-        public async Task<List<(H256, U128)>> GetTradesAsync(H256 startKey, uint page, CancellationToken token)
+        public async Task<AccountId32> GetServiceAccountAsync(CancellationToken token)
         {
             if (!IsConnected)
             {
+                Log.Warning("Currently not connected to the network!");
                 return null;
             }
 
-            if (page < 2 || page > 100)
+            return await SubstrateClient.AwesomeAvatarsStorage.ServiceAccount(token);
+        }
+
+        /// <summary>
+        /// 
+        /// </summary>
+        /// <param name="key"></param>
+        /// <param name="token"></param>
+        /// <returns></returns>
+        public async Task<BoundedVecT9> GetPreparationAsync(H256 key, CancellationToken token)
+        {
+            if (!IsConnected)
             {
-                throw new NotSupportedException("Page size must be in the range of 2 - 100");
+                Log.Warning("Currently not connected to the network!");
+                return null;
             }
 
-            var startKeyBytes = new byte[] { };
-            if (startKey != null && startKey.Bytes != null)
-            {
-                startKeyBytes = startKey.Bytes;
-            }
-
-            var avatarTrades = new List<(H256, U128)>();
-
-            var account32 = new AccountId32();
-            account32.Create(Utils.GetPublicKeyFrom(Account.Value));
-
-            var keyBytes = RequestGenerator.GetStorageKeyBytesHash("AwesomeAvatars", "Trade");
-            var keyBytesHexString = Utils.Bytes2HexString(keyBytes, Utils.HexStringFormat.Pure).ToLower();
-            var jArray = await SubstrateClient.State.GetKeysPagedAsync(keyBytes, page, startKeyBytes, token);
-            if (jArray == null)
-            {
-                return avatarTrades;
-            }
-
-            // Except
-            var avatarIds = jArray.Select(p => p.Value<string>().Replace(keyBytesHexString, "")).ToList();
-            foreach (var avatarId in avatarIds)
-            {
-                var key = avatarId.ToH256();
-                var price = await SubstrateClient.AwesomeAvatarsStorage.Trade(key, token);
-                if (price == null)
-                {
-                    continue;
-                }
-
-                avatarTrades.Add((key, price));
-            }
-
-            return avatarTrades;
+            return await SubstrateClient.AwesomeAvatarsStorage.Preparation(key, token);
         }
 
         #endregion Storage
@@ -333,6 +336,28 @@ namespace Ajuna.Integration
             }
 
             var extrinsic = AwesomeAvatarsCalls.Forge(leader, sacrificies);
+
+            return await GenericExtrinsicAsync(Account, extrinsicType, extrinsic, concurrentTasks, token);
+        }
+
+        /// <summary>
+        /// 
+        /// </summary>
+        /// <param name="to"></param>
+        /// <param name="avatarId"></param>
+        /// <param name="concurrentTasks"></param>
+        /// <param name="token"></param>
+        /// <returns></returns>
+        public async Task<string> TransferAvatarAsync(AccountId32 to, H256 avatarId, int concurrentTasks, CancellationToken token)
+        {
+            var extrinsicType = "TransferAvatar";
+
+            if (!IsConnected || Account == null)
+            {
+                return null;
+            }
+
+            var extrinsic = AwesomeAvatarsCalls.TransferAvatar(to, avatarId);
 
             return await GenericExtrinsicAsync(Account, extrinsicType, extrinsic, concurrentTasks, token);
         }
@@ -423,6 +448,9 @@ namespace Ajuna.Integration
             return await GenericExtrinsicAsync(Account, extrinsicType, extrinsic, concurrentTasks, token);
         }
 
+        private string UpgradeStorageKey => "UpgradeStorage";
+        public bool CanUpgradeStorage(int concurrentTasks)
+            => !HasToManyConcurentTaskRunning(UpgradeStorageKey, concurrentTasks);
         /// <summary>
         ///
         /// </summary>
@@ -431,8 +459,6 @@ namespace Ajuna.Integration
         /// <returns></returns>
         public async Task<string> UpgradeStorageAsync(int concurrentTasks, CancellationToken token)
         {
-            var extrinsicType = "UpgradeStorage";
-
             if (!IsConnected || Account == null)
             {
                 return null;
@@ -440,7 +466,7 @@ namespace Ajuna.Integration
 
             var extrinsic = AwesomeAvatarsCalls.UpgradeStorage();
 
-            return await GenericExtrinsicAsync(Account, extrinsicType, extrinsic, concurrentTasks, token);
+            return await GenericExtrinsicAsync(Account, UpgradeStorageKey, extrinsic, concurrentTasks, token);
         }
 
         /// <summary>
@@ -461,8 +487,8 @@ namespace Ajuna.Integration
             accountAlice.Create(Utils.GetPublicKeyFrom(Alice.Value));
 
             var enumCall = new EnumRuntimeCall();
-            var palletCall = new Bajun.Network.NET.NetApiExt.Generated.Model.pallet_ajuna_awesome_avatars.pallet.EnumCall();
-            palletCall.Create(Bajun.Network.NET.NetApiExt.Generated.Model.pallet_ajuna_awesome_avatars.pallet.Call.set_organizer, organizer);
+            var palletCall = new Substrate.Bajun.NET.NetApiExt.Generated.Model.pallet_ajuna_awesome_avatars.pallet.EnumCall();
+            palletCall.Create(Substrate.Bajun.NET.NetApiExt.Generated.Model.pallet_ajuna_awesome_avatars.pallet.Call.set_organizer, organizer);
             enumCall.Create(RuntimeCall.AwesomeAvatars, palletCall);
             var extrinsic = SudoCalls.Sudo(enumCall);
 
@@ -470,12 +496,13 @@ namespace Ajuna.Integration
         }
 
         /// <summary>
-        ///
+        /// 
         /// </summary>
+        /// <param name="seasonId"></param>
         /// <param name="treasurer"></param>
         /// <param name="token"></param>
         /// <returns></returns>
-        public async Task<string> SetTreasurerAsync(AccountId32 treasurer, CancellationToken token)
+        public async Task<string> SetTreasurerAsync(U16 seasonId, AccountId32 treasurer, CancellationToken token)
         {
             var extrinsicType = "SetTreasurer";
 
@@ -484,10 +511,32 @@ namespace Ajuna.Integration
                 return null;
             }
 
-            var extrinsic = AwesomeAvatarsCalls.SetTreasurer(treasurer);
+            var extrinsic = AwesomeAvatarsCalls.SetTreasurer(seasonId, treasurer);
 
             return await GenericExtrinsicAsync(Alice, extrinsicType, extrinsic, 1, token);
         }
+
+        /// <summary>
+        /// 
+        /// </summary>
+        /// <param name="seasonId"></param>
+        /// <param name="token"></param>
+        /// <returns></returns>
+        public async Task<string> ClaimTreasuryAsync(U16 seasonId, CancellationToken token)
+        {
+            var extrinsicType = "ClaimTreasury";
+
+            if (!IsConnected || ExtrinsicManger.Running.Any())
+            {
+                return null;
+            }
+
+            var extrinsic = AwesomeAvatarsCalls.ClaimTreasury(seasonId);
+
+            // TODO: Check Alice is the treasurer or if it needs to be a sudo call
+            return await GenericExtrinsicAsync(Alice, extrinsicType, extrinsic, 1, token);
+        }
+
 
         /// <summary>
         ///
@@ -539,16 +588,16 @@ namespace Ajuna.Integration
         /// <param name="concurrentTasks"></param>
         /// <param name="token"></param>
         /// <returns></returns>
-        public async Task<string> IssueFreeMintsAsync(AccountId32 dest, U16 howMany, int concurrentTasks, CancellationToken token)
+        public async Task<string> SetFreeMintsAsync(AccountId32 dest, U16 howMany, int concurrentTasks, CancellationToken token)
         {
-            var extrinsicType = "IssueFreeMints";
+            var extrinsicType = "SetFreeMints";
 
             if (!IsConnected || Account == null)
             {
                 return null;
             }
 
-            var extrinsic = AwesomeAvatarsCalls.IssueFreeMints(dest, howMany);
+            var extrinsic = AwesomeAvatarsCalls.SetFreeMints(dest, howMany);
 
             return await GenericExtrinsicAsync(Account, extrinsicType, extrinsic, concurrentTasks, token);
         }

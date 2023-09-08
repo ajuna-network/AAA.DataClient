@@ -1,43 +1,35 @@
-﻿using System;
+﻿using Ajuna.Integration.Client;
+using Ajuna.Integration.Helper;
+using Serilog;
+using Substrate.Bajun.NET.NetApiExt.Generated.Model.bajun_runtime;
+using Substrate.Bajun.NET.NetApiExt.Generated.Model.bounded_collections.bounded_vec;
+using Substrate.Bajun.NET.NetApiExt.Generated.Model.frame_system;
+using Substrate.Bajun.NET.NetApiExt.Generated.Model.orml_vesting;
+using Substrate.Bajun.NET.NetApiExt.Generated.Model.sp_core.crypto;
+using Substrate.Bajun.NET.NetApiExt.Generated.Model.sp_runtime.multiaddress;
+using Substrate.Bajun.NET.NetApiExt.Generated.Storage;
+using Substrate.NetApi;
+using Substrate.NetApi.Model.Types;
+using Substrate.NetApi.Model.Types.Base;
+using Substrate.NetApi.Model.Types.Primitive;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Numerics;
 using System.Threading;
 using System.Threading.Tasks;
-using Ajuna.Integration.Client;
-using Ajuna.Integration.Helper;
-using Ajuna.NetApi;
-using Ajuna.NetApi.Model.Types;
-using Ajuna.NetApi.Model.Types.Base;
-using Ajuna.NetApi.Model.Types.Primitive;
-using Bajun.Network.NET.NetApiExt.Generated.Model.bajun_runtime;
-using Bajun.Network.NET.NetApiExt.Generated.Model.frame_system;
-using Bajun.Network.NET.NetApiExt.Generated.Model.orml_vesting;
-using Bajun.Network.NET.NetApiExt.Generated.Model.sp_core.bounded.bounded_vec;
-using Bajun.Network.NET.NetApiExt.Generated.Model.sp_core.crypto;
-
-using Bajun.Network.NET.NetApiExt.Generated.Model.sp_runtime.multiaddress;
-using Bajun.Network.NET.NetApiExt.Generated.Storage;
-using Serilog;
 
 namespace Ajuna.Integration
 {
     public partial class BajunNetwork : BaseClient
     {
+        public const long DECIMALS = 1000000000000;
+
         public Account Account { get; set; }
 
-        public NetworkType NetworkType { get; set; }
-
-        public BajunNetwork(Account account, NetworkType networkType, string url) : base(url)
+        public BajunNetwork(Account account, NetworkType networkType, string url) : base(url, networkType)
         {
             Account = account;
-            NetworkType = networkType;
-        }
-
-        public BajunNetwork(Account account, string url) : base(url)
-        {
-            Account = account;
-            NetworkType = NetworkType.Test;
         }
 
         public async Task<U32> GetBlocknumberAsync(CancellationToken token)
@@ -167,10 +159,10 @@ namespace Ajuna.Integration
                 return accountInfos;
             }
 
-            var storageChangeSets = await SubstrateClient.State.GetQueryStorageAtAsync(storageKeys.Select(p => Utils.HexToByteArray(p.ToString())).ToList(), null, token);
+            var storageChangeSets = await SubstrateClient.State.GetQueryStorageAtAsync(storageKeys.Select(p => Utils.HexToByteArray(p.ToString())).ToList(), (string)null, token);
             if (storageChangeSets != null)
             {
-                foreach (var storageChangeSet in storageChangeSets.Changes)
+                foreach (var storageChangeSet in storageChangeSets.First().Changes)
                 {
                     var storageKeyString = storageChangeSet[0];
                     var key = storageKeyString.Substring(storageKeyString.Length - 64);
@@ -189,52 +181,13 @@ namespace Ajuna.Integration
             return accountInfos;
         }
 
-        public async Task<List<string[]>> GetGenericNextAsync(string module, string item, string? startStorageKey, uint page, byte[] blockHash, CancellationToken token)
-        {
-            if (!IsConnected)
-            {
-                return null;
-            }
-
-            if (page < 2 || page > 1000)
-            {
-                throw new NotSupportedException("Page size must be in the range of 2 - 1000");
-            }
-
-            byte[] startKeyBytes = null;
-            if (startStorageKey != null)
-            {
-                startKeyBytes = Utils.HexToByteArray(startStorageKey);
-            }
-
-            var genericInfos = new List<string[]>();
-            var keyBytes = RequestGenerator.GetStorageKeyBytesHash(module, item);
-
-            var storageKeys = await SubstrateClient.State.GetKeysPagedAtAsync(keyBytes, page, startKeyBytes, blockHash, token);
-            if (storageKeys == null || !storageKeys.Any())
-            {
-                return genericInfos;
-            }
-
-            var storageChangeSets = await SubstrateClient.State.GetQueryStorageAtAsync(storageKeys.Select(p => Utils.HexToByteArray(p.ToString())).ToList(), blockHash, token);
-            if (storageChangeSets != null)
-            {
-                foreach (var storageChangeSet in storageChangeSets.Changes)
-                {
-                    genericInfos.Add( new string[] { storageChangeSet[0], storageChangeSet[1] });
-                }
-            }
-
-            return genericInfos;
-        }
-
         /// <summary>
         /// Get vesting schedule.
         /// </summary>
         /// <param name="publicKey"></param>
         /// <param name="token"></param>
         /// <returns></returns>
-        public async Task<BoundedVecT19> GetVestingSchedulesAsync(AccountId32 from, CancellationToken token)
+        public async Task<BoundedVecT26> GetVestingSchedulesAsync(AccountId32 from, CancellationToken token)
         {
             if (!IsConnected)
             {
@@ -253,7 +206,7 @@ namespace Ajuna.Integration
         /// <param name="token"></param>
         /// <returns></returns>
         /// <exception cref="NotSupportedException"></exception>
-        public async Task<List<(string, AccountId32, BoundedVecT19)>> GetVestingSchedulesAsync(string startStorageKey, uint page, CancellationToken token)
+        public async Task<List<(string, AccountId32, BoundedVecT26)>> GetVestingSchedulesAsync(string startStorageKey, uint page, CancellationToken token)
         {
             if (!IsConnected)
             {
@@ -271,10 +224,9 @@ namespace Ajuna.Integration
                 startKeyBytes = Utils.HexToByteArray(startStorageKey);
             }
 
-            var vestingSchedules = new List<(string, AccountId32, BoundedVecT19)>();
+            var vestingSchedules = new List<(string, AccountId32, BoundedVecT26)>();
             var keyBytes = RequestGenerator.GetStorageKeyBytesHash("Vesting", "VestingSchedules");
 
-            //var keyBytesHexString = Utils.Bytes2HexString(keyBytes, Utils.HexStringFormat.Pure).ToLower();
             var storageKeys = await SubstrateClient.State.GetKeysPagedAsync(keyBytes, page, startKeyBytes, token);
             if (storageKeys == null)
             {
@@ -287,8 +239,6 @@ namespace Ajuna.Integration
                 var key = storageKeyString.Substring(storageKeyString.Length - 64);
                 var pubKey = Utils.HexToByteArray(key);
                 var address = Utils.GetAddressFrom(pubKey, 1337);
-
-                //Log.Information("Got entry for {0}", address);
 
                 var accountId32 = new AccountId32();
                 accountId32.Create(pubKey);
@@ -339,7 +289,7 @@ namespace Ajuna.Integration
             multiAddress.Create(MultiAddress.Id, account32);
 
             var amount = new BaseCom<U128>();
-            amount.Create(tokens * 1000000000000);
+            amount.Create(tokens * DECIMALS);
 
             var extrinsic = BalancesCalls.Transfer(multiAddress, amount);
 
@@ -367,7 +317,7 @@ namespace Ajuna.Integration
             multiAddress.Create(MultiAddress.Id, to.ToAccountId32());
 
             var amount = new BaseCom<U128>();
-            amount.Create(tokens * 1000000000000);
+            amount.Create(tokens * DECIMALS);
 
             var extrinsic = BalancesCalls.Transfer(multiAddress, amount);
 
@@ -395,7 +345,7 @@ namespace Ajuna.Integration
             multiAddress.Create(MultiAddress.Id, to.ToAccountId32());
 
             var amount = new BaseCom<U128>();
-            amount.Create(tokens * 1000000000000);
+            amount.Create(tokens * DECIMALS);
 
             var extrinsic = BalancesCalls.Transfer(multiAddress, amount);
 
@@ -457,6 +407,30 @@ namespace Ajuna.Integration
         ///
         /// </summary>
         /// <param name="to"></param>
+        /// <param name="amount"></param>
+        /// <param name="token"></param>
+        /// <returns></returns>
+        public async Task<string> ClaimForAsync(AccountId32 dest, int concurrentTasks, CancellationToken token)
+        {
+            var extrinsicType = "ClaimFor";
+
+            if (!IsConnected || Account == null)
+            {
+                return null;
+            }
+
+            var multiAddress = new EnumMultiAddress();
+            multiAddress.Create(MultiAddress.Id, dest);
+
+            var extrinsic = VestingCalls.ClaimFor(multiAddress);
+
+            return await GenericExtrinsicAsync(Account, extrinsicType, extrinsic, concurrentTasks, token);
+        }
+
+        /// <summary>
+        ///
+        /// </summary>
+        /// <param name="to"></param>
         /// <param name="start"></param>
         /// <param name="period"></param>
         /// <param name="periodCount"></param>
@@ -491,6 +465,66 @@ namespace Ajuna.Integration
             var extrinsic = VestingCalls.VestedTransfer(multiAddress, vestingSchedule);
 
             return await GenericExtrinsicAsync(Account, extrinsicType, extrinsic, 10, token);
+        }
+
+        /// <summary>
+        /// Get all storage
+        /// </summary>
+        /// <typeparam name="T1"></typeparam>
+        /// <typeparam name="T2"></typeparam>
+        /// <param name="client"></param>
+        /// <param name="module"></param>
+        /// <param name="item"></param>
+        /// <param name="startKey"></param>
+        /// <param name="page"></param>
+        /// <param name="blockHash"></param>
+        /// <param name="token"></param>
+        /// <returns></returns>
+        /// <exception cref="NotSupportedException"></exception>
+        public async Task<List<(byte[], T1, T2)>> GetAllStoragePagedAsync<T1, T2>(SubstrateClient client, string module, string item, byte[] startKey, uint page, string? blockHash, CancellationToken token)
+            where T1 : IType, new()
+            where T2 : IType, new()
+        {
+            if (!client.IsConnected)
+            {
+                return null;
+            }
+
+            if (page < 2 || page > 1000)
+            {
+                throw new NotSupportedException("Page size must be in the range of 2 - 1000");
+            }
+
+            var result = new List<(byte[], T1, T2)>();
+            var keyBytes = RequestGenerator.GetStorageKeyBytesHash(module, item);
+
+            var storageKeys = await client.State.GetKeysPagedAsync(keyBytes, page, startKey, token);
+            if (storageKeys == null || !storageKeys.Any())
+            {
+                return result;
+            }
+
+            var storageChangeSets = await client.State.GetQueryStorageAtAsync(storageKeys.Select(p => Utils.HexToByteArray(p.ToString())).ToList(), blockHash, token);
+            if (storageChangeSets != null)
+            {
+                foreach (var storageChangeSet in storageChangeSets.First().Changes)
+                {
+                    var storageKeyString = storageChangeSet[0];
+
+                    var keyParam = new T1();
+                    var keyStr = storageKeyString[(2 + (keyBytes.Length * 2))..];
+                    keyParam.Create(keyStr);
+
+                    var valueParam = new T2();
+                    if (storageChangeSet[1] != null)
+                    {
+                        valueParam.Create(storageChangeSet[1]);
+                    }
+                    result.Add((Utils.HexToByteArray(storageKeyString), keyParam, valueParam));
+                }
+            }
+
+            return result;
         }
     }
 }

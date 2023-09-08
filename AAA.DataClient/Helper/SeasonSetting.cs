@@ -1,5 +1,7 @@
 ﻿using System;
-using Bajun.Network.NET.NetApiExt.Generated.Model.pallet_ajuna_awesome_avatars.types.season;
+using System.Numerics;
+using Substrate.Bajun.NET.NetApiExt.Generated.Model.pallet_ajuna_awesome_avatars.types.avatar;
+using Substrate.Bajun.NET.NetApiExt.Generated.Model.pallet_ajuna_awesome_avatars.types.avatar.rarity_tier;
 
 namespace Ajuna.Integration.Helper
 {
@@ -23,6 +25,20 @@ namespace Ajuna.Integration.Helper
             public byte BaseProb { get; set; }
             public byte PerPeriod { get; set; }
             public byte Periods { get; set; }
+            public uint[] TradeFilters { get; set; }
+
+            public BigInteger MintFeesOne { get; set; }
+            public BigInteger MintFeesThree { get; set; }
+            public BigInteger MintFeesSix { get; set; }
+
+            public BigInteger TransferAvatarFee { get; internal set; }
+            public BigInteger BuyMinimum { get; internal set; }
+            public byte BuyPercent { get; internal set; }
+            public BigInteger UpgradeStorageFee { get; internal set; }
+            public BigInteger PrepareAvatarFee { get; internal set; }
+
+            public LogicGeneration MintLogic { get; internal set; }
+            public LogicGeneration ForgeLogic { get; internal set; }
 
             public SeasonSetting()
             {
@@ -32,7 +48,8 @@ namespace Ajuna.Integration.Helper
             {
                 switch (networkType)
                 {
-                    case NetworkType.Rococo:
+                    case NetworkType.Local:
+                    case NetworkType.Test:
                         return new SeasonSetting()
                         {
                             Name = "Canary Season Alpha",
@@ -50,15 +67,27 @@ namespace Ajuna.Integration.Helper
                             BatchMintProbs = new byte[] { 80, 20 },
                             BaseProb = 20,
                             PerPeriod = 20,
-                            Periods = 12
+                            Periods = 12,
+
+                            TradeFilters = new uint[] { },
+
+                            MintFeesOne = 990000000000, // 0.99 BAJU
+                            MintFeesThree = 2690000000000, // 2.69 BAJU
+                            MintFeesSix = 4990000000000, // 4.99 BAJU
+
+                            TransferAvatarFee = 5000000000000, // 5.00 BAJU
+                            BuyMinimum = 1000000000000, // 1.00 BAJU
+                            BuyPercent = 1, // 1 %
+                            UpgradeStorageFee = 54900000000000, // 54.9 BAJU
+                            PrepareAvatarFee = 1000000000000, // 1.00 BAJU
+
+                            MintLogic = LogicGeneration.Second,
+                            ForgeLogic = LogicGeneration.Second
                         };
 
                     case NetworkType.Bajun:
-                    case NetworkType.Ajuna:
                         throw new NotImplementedException($"Not implemented {networkType}!");
 
-                    // default settings
-                    case NetworkType.Test:
                     default:
                         return new SeasonSetting();
                 }

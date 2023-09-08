@@ -1,15 +1,16 @@
-﻿using System;
-using System.Linq;
-using System.Threading;
-using System.Threading.Tasks;
-using Ajuna.NetApi;
-using Ajuna.NetApi.Model.Extrinsics;
-using Ajuna.NetApi.Model.Types;
-using Bajun.Network.NET.NetApiExt.Generated;
-using Bajun.Network.NET.NetApiExt.Generated.Storage;
+﻿using Ajuna.Integration.Helper;
 using Schnorrkel.Keys;
 using Serilog;
 using StreamJsonRpc;
+using Substrate.Bajun.NET.NetApiExt.Generated;
+using Substrate.Bajun.NET.NetApiExt.Generated.Storage;
+using Substrate.NetApi;
+using Substrate.NetApi.Model.Extrinsics;
+using Substrate.NetApi.Model.Types;
+using System;
+using System.Linq;
+using System.Threading;
+using System.Threading.Tasks;
 
 namespace Ajuna.Integration.Client
 {
@@ -30,10 +31,18 @@ namespace Ajuna.Integration.Client
 
         public bool IsConnected => SubstrateClient.IsConnected;
 
-        public BaseClient(string url, int maxConcurrentCalls = 10)
+        public NetworkType NetworkType { get; set; }
+
+        public BaseClient(string url, NetworkType networkType, int maxConcurrentCalls = 10)
         {
-            _chargeTypeDefault = ChargeTransactionPayment.Default();
-            //_chargeTypeDefault = ChargeAssetTxPayment.Default();
+            if (networkType == NetworkType.Local || networkType == NetworkType.Test)
+            {
+                _chargeTypeDefault = ChargeAssetTxPayment.Default();
+            }
+            else
+            {
+                _chargeTypeDefault = ChargeTransactionPayment.Default();
+            }
 
             _maxConcurrentCalls = maxConcurrentCalls;
 
@@ -58,10 +67,10 @@ namespace Ajuna.Integration.Client
                 try
                 {
                     await SubstrateClient.ConnectAsync(useMetadata, standardSubstrate, token);
-                } 
-                catch(Exception e)
+                }
+                catch (Exception e)
                 {
-                    Log.Error("BaseClient.ConnectAsync: {0}", 
+                    Log.Error("BaseClient.ConnectAsync: {0}",
                         e.ToString());
                 }
             }
@@ -79,6 +88,9 @@ namespace Ajuna.Integration.Client
             await SubstrateClient.CloseAsync();
             return true;
         }
+
+        public bool HasToManyConcurentTaskRunning(string extrinsicType, int concurrentTasks)
+            => ExtrinsicManger.Running.Count(p => p.ExtrinsicType == extrinsicType) >= concurrentTasks;
 
         /// <summary>
         ///
@@ -108,7 +120,7 @@ namespace Ajuna.Integration.Client
                 return null;
             }
 
-            if (ExtrinsicManger.Running.Count(p => p.ExtrinsicType == extrinsicType) >= concurrentTasks)
+            if (HasToManyConcurentTaskRunning(extrinsicType, concurrentTasks))
             {
                 Log.Warning("There can not be more then {0} concurrent tasks of {1}!", concurrentTasks, extrinsicType);
                 return null;

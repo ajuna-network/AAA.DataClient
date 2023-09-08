@@ -8,9 +8,24 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <PackageReference Include="Bajun.Network.NET.Extension" Version="1.0.110" />
-    <PackageReference Include="Serilog" Version="2.12.0" />
+    <PackageReference Include="Serilog" Version="3.0.1" />
     <PackageReference Include="Serilog.Sinks.Console" Version="4.1.0" />
+    <PackageReference Include="Substrate.Bajun.NET.Extension" Version="1.120.0" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <Reference Include="Ajuna.AAA.Season2">
+      <HintPath>Ajuna.AAA.Season2.dll</HintPath>
+    </Reference>
+  </ItemGroup>
+
+  <ItemGroup>
+    <None Update="latam_accounts.txt">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </None>
+    <None Update="season2.json">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </None>
   </ItemGroup>
 
 </Project>

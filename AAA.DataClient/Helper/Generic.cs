@@ -1,9 +1,9 @@
-﻿using Ajuna.NetApi;
-using Ajuna.NetApi.Model.Types;
-using Ajuna.NetApi.Model.Types.Base;
-using Ajuna.NetApi.Model.Types.Primitive;
-using Bajun.Network.NET.NetApiExt.Generated.Model.primitive_types;
-using Bajun.Network.NET.NetApiExt.Generated.Model.sp_core.crypto;
+﻿using Substrate.Bajun.NET.NetApiExt.Generated.Model.primitive_types;
+using Substrate.Bajun.NET.NetApiExt.Generated.Model.sp_core.crypto;
+using Substrate.NetApi;
+using Substrate.NetApi.Model.Types;
+using Substrate.NetApi.Model.Types.Base;
+using Substrate.NetApi.Model.Types.Primitive;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -67,11 +67,11 @@ namespace Ajuna.Integration.Helper
             return h256;
         }
 
-        public static U128 ToU128(this BigInteger number)
+        public static U8 ToU8(this byte number)
         {
-            var u128 = new U128();
-            u128.Create(number);
-            return u128;
+            var u8 = new U8();
+            u8.Create(number);
+            return u8;
         }
 
         public static U16 ToU16(this ushort number)
@@ -81,9 +81,18 @@ namespace Ajuna.Integration.Helper
             return u16;
         }
 
-        public static U16[] ToU16Array(this ushort[] bytes)
+        public static U32 ToU32(this uint number)
         {
-            return bytes.Select(p => p.ToU16()).ToArray();
+            var u32 = new U32();
+            u32.Create(number);
+            return u32;
+        }
+
+        public static U128 ToU128(this BigInteger number)
+        {
+            var u128 = new U128();
+            u128.Create(number);
+            return u128;
         }
 
         public static U8[] ToU8Array(this byte[] bytes)
@@ -91,16 +100,19 @@ namespace Ajuna.Integration.Helper
             return bytes.Select(p => p.ToU8()).ToArray();
         }
 
+        public static U16[] ToU16Array(this ushort[] bytes)
+        {
+            return bytes.Select(p => p.ToU16()).ToArray();
+        }
+
+        public static U32[] ToU32Array(this uint[] bytes)
+        {
+            return bytes.Select(p => p.ToU32()).ToArray();
+        }
+
         public static U8[] ToU8Array(this string str)
         {
             return str.Select(p => p.ToU8()).ToArray();
-        }
-
-        public static U8 ToU8(this byte number)
-        {
-            var u8 = new U8();
-            u8.Create(number);
-            return u8;
         }
 
         public static U8 ToU8(this char character)
@@ -117,10 +129,10 @@ namespace Ajuna.Integration.Helper
             return baseOpt;
         }
 
-        public static IEnumerable<IEnumerable<T>> BuildChunksWithLinqAndYield<T>(List<T> fullList, int batchSize)
+        public static IEnumerable<IEnumerable<T>> BuildChunksWithLinqAndYield<T>(IEnumerable<T> fullList, int batchSize)
         {
             int total = 0;
-            while (total < fullList.Count)
+            while (total < fullList.Count())
             {
                 yield return fullList.Skip(total).Take(batchSize);
                 total += batchSize;

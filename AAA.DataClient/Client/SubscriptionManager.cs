@@ -1,4 +1,4 @@
-﻿using Ajuna.NetApi.Model.Rpc;
+﻿using Substrate.NetApi.Model.Rpc;
 using Serilog;
 
 namespace Ajuna.Integration.Client

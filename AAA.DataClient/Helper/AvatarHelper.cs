@@ -1,15 +1,81 @@
-﻿using System.Linq;
-using Ajuna.NetApi.Model.Types.Base;
-using Ajuna.NetApi.Model.Types.Primitive;
-using Bajun.Network.NET.NetApiExt.Generated.Model.pallet_ajuna_awesome_avatars.types.config;
-using Bajun.Network.NET.NetApiExt.Generated.Model.pallet_ajuna_awesome_avatars.types.season;
-using Bajun.Network.NET.NetApiExt.Generated.Model.sp_core.bounded.bounded_vec;
+﻿using Substrate.Bajun.NET.NetApiExt.Generated.Model.bounded_collections.bounded_vec;
+using Substrate.Bajun.NET.NetApiExt.Generated.Model.pallet_ajuna_awesome_avatars.types.avatar;
+using Substrate.Bajun.NET.NetApiExt.Generated.Model.pallet_ajuna_awesome_avatars.types.avatar.rarity_tier;
+using Substrate.Bajun.NET.NetApiExt.Generated.Model.pallet_ajuna_awesome_avatars.types.config;
+using Substrate.Bajun.NET.NetApiExt.Generated.Model.pallet_ajuna_awesome_avatars.types.fee;
+using Substrate.Bajun.NET.NetApiExt.Generated.Model.pallet_ajuna_awesome_avatars.types.season;
+using Substrate.NetApi.Model.Types.Base;
+using Substrate.NetApi.Model.Types.Primitive;
+using System.Linq;
 
 namespace Ajuna.Integration.Helper
 {
     public static partial class AvatarHelper
     {
-        public static MintFees SetDefault(this MintFees result, GlobalConfigSetting setting)
+        private static MintConfig SetDefault(this MintConfig result, GlobalConfigSetting setting)
+        {
+            result.Open = new Bool();
+            result.Open.Create(setting.MintOpen);
+
+            result.Cooldown = new U32();
+            result.Cooldown.Create(setting.MintCooldown);
+
+            result.FreeMintFeeMultiplier = new U16();
+            result.FreeMintFeeMultiplier.Create(setting.MintFreeMintFeeMultiplier);
+
+            return result;
+        }
+
+        private static ForgeConfig SetDefault(this ForgeConfig result, GlobalConfigSetting setting)
+        {
+            result.Open = new Bool();
+            result.Open.Create(setting.ForgeOpen);
+
+            return result;
+        }
+
+        private static TransferConfig SetDefault(this TransferConfig result, GlobalConfigSetting setting)
+        {
+            result.Open = new Bool();
+            result.Open.Create(setting.TransferOpen);
+
+            result.FreeMintTransferFee = new U16();
+            result.FreeMintTransferFee.Create(setting.FreeMintTransferFee);
+
+            result.MinFreeMintTransfer = new U16();
+            result.MinFreeMintTransfer.Create(setting.MinFreeMintTransfer);
+
+            return result;
+        }
+
+        private static TradeConfig SetDefault(this TradeConfig result, GlobalConfigSetting setting)
+        {
+            result.Open = new Bool();
+            result.Open.Create(setting.TradeOpen);
+
+            return result;
+        }
+
+        private static NftTransferConfig SetDefault(this NftTransferConfig result, GlobalConfigSetting setting)
+        {
+            result.Open = new Bool();
+            result.Open.Create(setting.NftTransferOpen);
+
+            return result;
+        }
+
+        public static GlobalConfig SetDefault(this GlobalConfig result, GlobalConfigSetting setting)
+        {
+            result.Mint = new MintConfig().SetDefault(setting);
+            result.Forge = new ForgeConfig().SetDefault(setting);
+            result.Transfer = new TransferConfig().SetDefault(setting);
+            result.Trade = new TradeConfig().SetDefault(setting);
+            result.NftTransfer = new NftTransferConfig().SetDefault(setting);
+
+            return result;
+        }
+
+        public static MintFees SetDefault(this MintFees result, SeasonSetting setting)
         {
             result.One = new U128();
             result.One.Create(setting.MintFeesOne);
@@ -23,64 +89,24 @@ namespace Ajuna.Integration.Helper
             return result;
         }
 
-        private static MintConfig SetDefault(this MintConfig result, GlobalConfigSetting setting)
+        private static Fee SetDefault(this Fee result, SeasonSetting setting)
         {
-            result.Open = new Bool();
-            result.Open.Create(setting.MintOpen);
+            result.Mint = new MintFees().SetDefault(setting);
 
-            result.Fees = new MintFees().SetDefault(setting);
+            result.TransferAvatar = new U128();
+            result.TransferAvatar.Create(setting.TransferAvatarFee);
 
-            result.Cooldown = new U32();
-            result.Cooldown.Create(setting.MintCooldown);
+            result.BuyMinimum = new U128();
+            result.BuyMinimum.Create(setting.BuyMinimum);
 
-            result.FreeMintFeeMultiplier = new U16();
-            result.FreeMintFeeMultiplier.Create(setting.MintFreeMintFeeMultiplier);
+            result.BuyPercent = new U8();
+            result.BuyPercent.Create(setting.BuyPercent);
 
-            result.FreeMintTransferFee = new U16();
-            result.FreeMintTransferFee.Create(setting.MintFreeMintTransferFee);
+            result.UpgradeStorage = new U128();
+            result.UpgradeStorage.Create(setting.UpgradeStorageFee);
 
-            result.MinFreeMintTransfer = new U16();
-            result.MinFreeMintTransfer.Create(setting.MintMinFreeMintTransfer);
-
-            return result;
-        }
-
-        private static ForgeConfig SetDefault(this ForgeConfig result, GlobalConfigSetting setting)
-        {
-            result.Open = new Bool();
-            result.Open.Create(setting.ForgeOpen);
-
-            return result;
-        }
-
-        private static TradeConfig SetDefault(this TradeConfig result, GlobalConfigSetting setting)
-        {
-            result.Open = new Bool();
-            result.Open.Create(setting.TradeOpen);
-
-            result.MinFee = new U128();
-            result.MinFee.Create(setting.TradeMinFee);
-
-            result.PercentFee = new U8();
-            result.PercentFee.Create(setting.TradePercentFee);
-
-            return result;
-        }
-
-        private static AccountConfig SetDefault(this AccountConfig result, GlobalConfigSetting setting)
-        {
-            result.StorageUpgradeFee = new U128();
-            result.StorageUpgradeFee.Create(setting.AccountStorageUpgradeFee);
-
-            return result;
-        }
-
-        public static GlobalConfig SetDefault(this GlobalConfig result, GlobalConfigSetting setting)
-        {
-            result.Mint = new MintConfig().SetDefault(setting);
-            result.Forge = new ForgeConfig().SetDefault(setting);
-            result.Trade = new TradeConfig().SetDefault(setting);
-            result.Account = new AccountConfig().SetDefault(setting);
+            result.PrepareAvatar = new U128();
+            result.PrepareAvatar.Create(setting.PrepareAvatarFee);
 
             return result;
         }
@@ -89,12 +115,10 @@ namespace Ajuna.Integration.Helper
         {
             season = new Season();
 
-            //season.Name = new BoundedVecT1();
             season.Name = new BoundedVecT4();
             season.Name.Value = new BaseVec<U8>();
             season.Name.Value.Create(setting.Name.ToU8Array());
 
-            //season.Description = new BoundedVecT2();
             season.Description = new BoundedVecT5();
             season.Description.Value = new BaseVec<U8>();
             season.Description.Value.Create(setting.Description.ToU8Array());
@@ -123,7 +147,6 @@ namespace Ajuna.Integration.Helper
             season.MaxSacrifices = new U8();
             season.MaxSacrifices.Create(setting.MaxSacrifices);
 
-            //season.Tiers = new BoundedVecT3();
             season.Tiers = new BoundedVecT6();
             season.Tiers.Value = new BaseVec<EnumRarityTier>();
             season.Tiers.Value.Create(setting.RarityTiers
@@ -134,13 +157,12 @@ namespace Ajuna.Integration.Helper
                     return enumRarityTier;
                 }).ToArray());
 
-            //season.SingleMintProbs = new BoundedVecT4();
             season.SingleMintProbs = new BoundedVecT7();
             season.SingleMintProbs.Value = new BaseVec<U8>();
             season.SingleMintProbs.Value.Create(setting.SingleMintProbs.ToU8Array());
 
-            //season.BatchMintProbs = new BoundedVecT4();
             season.BatchMintProbs = new BoundedVecT7();
+
             season.BatchMintProbs.Value = new BaseVec<U8>();
             season.BatchMintProbs.Value.Create(setting.BatchMintProbs.ToU8Array());
 
@@ -152,6 +174,18 @@ namespace Ajuna.Integration.Helper
 
             season.Periods = new U16();
             season.Periods.Create(setting.Periods);
+
+            season.TradeFilters = new BoundedVecT8();
+            season.TradeFilters.Value = new BaseVec<U32>();
+            season.TradeFilters.Value.Create(setting.TradeFilters.ToU32Array());
+
+            season.Fee = new Fee().SetDefault(setting);
+
+            season.MintLogic = new EnumLogicGeneration();
+            season.MintLogic.Create(setting.MintLogic);
+
+            season.ForgeLogic = new EnumLogicGeneration();
+            season.ForgeLogic.Create(setting.ForgeLogic);
 
             return season;
         }

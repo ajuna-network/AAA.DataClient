@@ -1,5 +1,6 @@
 ﻿using System.Text.Json.Serialization;
-using Bajun.Network.NET.NetApiExt.Generated.Model.pallet_ajuna_awesome_avatars.types.season;
+using Substrate.Bajun.NET.NetApiExt.Generated.Model.pallet_ajuna_awesome_avatars.types.avatar.rarity_tier;
+using Substrate.Bajun.NET.NetApiExt.Generated.Model.pallet_ajuna_awesome_avatars.types.season;
 
 namespace Ajuna.TheOracle.DataClient.Model.Avatar
 {
